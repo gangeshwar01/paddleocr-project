@@ -1,3 +1,7 @@
+Of course. Here is the content for the `PaddleOCR/README.md` file.
+
+---
+
 # 🚀 End-to-End Workflow with PaddleOCR
 
 ## 🎯 Objective
