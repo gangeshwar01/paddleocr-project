@@ -1,19 +1,33 @@
 # file: scripts/visualize_preds.py
 import os
 import argparse
-from paddleocr import PaddleOCR, draw_ocr
+import sys
 from PIL import Image
+
+# --- Add this block at the top of your script ---
+# Define the absolute path to the cloned PaddleOCR repository
+# Use 'r' before the string to handle backslashes correctly on Windows.
+PADDLE_OCR_REPO_PATH = r'C:\Users\gange\PaddleOCR' # <-- This path must be correct!
+
+# Add the repository's root directory to Python's path
+sys.path.append(PADDLE_OCR_REPO_PATH)
+# --------------------------------------------------
+
+# Now, the rest of your imports should work as intended
+from paddleocr import PaddleOCR
+from tools.infer.utility import draw_ocr
+
 
 def visualize(det_model_dir, rec_model_dir, image_dir, output_dir, font_path):
     """Loads custom models and visualizes predictions."""
 
-    print("Loading custom models...")
+    print("Loading custom models... 🧠")
     ocr_engine = PaddleOCR(
-        use_angle_cls=True,
-        det_model_dir=det_model_dir,
-        rec_model_dir=rec_model_dir,
-        use_gpu=True
-    )
+    use_textline_orientation=True,
+    text_detection_model_dir=det_model_dir,
+    text_recognition_model_dir=rec_model_dir
+)
+
 
     os.makedirs(output_dir, exist_ok=True)
     print(f"Processing images in: {image_dir}")
@@ -45,7 +59,10 @@ if __name__ == '__main__':
     parser.add_argument('--rec_model_dir', type=str, required=True, help='Path to the trained recognition model directory.')
     parser.add_argument('--image_dir', type=str, required=True, help='Directory of test images.')
     parser.add_argument('--output_dir', type=str, required=True, help='Directory to save visualized images.')
-    parser.add_argument('--font_path', type=str, default='doc/fonts/latin.ttf', help='Path to a TTF font file.')
+    
+    # --- IMPROVEMENT: Auto-detect the font path ---
+    default_font = os.path.join(PADDLE_OCR_REPO_PATH, 'doc/fonts/latin.ttf')
+    parser.add_argument('--font_path', type=str, default=default_font, help='Path to a TTF font file.')
 
     args = parser.parse_args()
     visualize(args.det_model_dir, args.rec_model_dir, args.image_dir, args.output_dir, args.font_path)

@@ -25,13 +25,30 @@ def convert_annotations(json_path, image_dir, output_file):
         if img_id in image_map:
             transcription = "###" if ann.get('legibility', 'legible') == 'illegible' else ann['utf8_string']
             
-            seg = ann['segmentation'][0]
-            points = [[int(seg[i]), int(seg[i+1])] for i in range(0, len(seg), 2)]
+            points = []
+            # --- START OF CHANGE ---
+            # Check for 'segmentation' first, as it provides more precise polygons.
+            if 'segmentation' in ann and ann['segmentation']:
+                seg = ann['segmentation'][0]
+                points = [[int(seg[i]), int(seg[i+1])] for i in range(0, len(seg), 2)]
             
+            # If no segmentation, fall back to the bounding box 'bbox'.
+            elif 'bbox' in ann:
+                x, y, w, h = [int(v) for v in ann['bbox']]
+                # Convert [x, y, w, h] to a 4-point polygon [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+                points = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+            
+            # If neither key is present, skip this annotation to avoid errors.
+            else:
+                continue
+            # --- END OF CHANGE ---
+
+            # Ensure all polygons are 4 points for consistency with DBNet.
             if len(points) != 4:
                 x_coords = [p[0] for p in points]
                 y_coords = [p[1] for p in points]
-                min_x, max_x, min_y, max_y = min(x_coords), max(x_coords), min(y_coords), max(y_coords)
+                min_x, max_x = min(x_coords), max(x_coords)
+                min_y, max_y = min(y_coords), max(y_coords)
                 points = [[min_x, min_y], [max_x, min_y], [max_x, max_y], [min_x, max_y]]
             
             annotation = {"transcription": transcription, "points": points}
